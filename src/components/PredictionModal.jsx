@@ -7,6 +7,16 @@ import {
 } from "../api/predictionsClient.js"
 import { flagUrl } from "../utils/flags.js"
 
+const MAX_GOALS = 20
+
+/** Strip leading zeros; keep "" while clearing. */
+function parseGoalInput(raw) {
+  if (raw === "") return ""
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n < 0) return "0"
+  return String(Math.min(MAX_GOALS, Math.floor(n)))
+}
+
 function FlagImg({ code, className = "h-8 w-12" }) {
   const src = flagUrl(code)
   if (!src) {
@@ -26,52 +36,70 @@ function FlagImg({ code, className = "h-8 w-12" }) {
   )
 }
 
-function gradeStyles(grade) {
-  if (grade === "exact") {
+/** @returns {'exact' | 'win' | 'draw' | 'wrong' | 'pending'} */
+function predictionVisual(p) {
+  if (p.grade === "exact") return "exact"
+  if (p.grade === "wrong") return "wrong"
+  if (p.grade === "outcome") {
+    return p.homeGoals === p.awayGoals ? "draw" : "win"
+  }
+  return "pending"
+}
+
+function visualStyles(visual) {
+  if (visual === "exact") {
     return "border-emerald-500/50 bg-emerald-950/40 ring-emerald-400/25"
   }
-  if (grade === "outcome") {
-    return "border-emerald-600/35 bg-emerald-950/25 ring-emerald-500/15"
+  if (visual === "win") {
+    return "border-blue-500/50 bg-blue-950/40 ring-blue-400/25"
   }
-  if (grade === "wrong") {
+  if (visual === "draw") {
+    return "border-amber-500/50 bg-amber-950/35 ring-amber-400/25"
+  }
+  if (visual === "wrong") {
     return "border-rose-500/45 bg-rose-950/35 ring-rose-400/20"
   }
   return "border-white/8 bg-zinc-900/60 ring-white/5"
 }
 
-function PredictionRow({ p, finished, finalScore }) {
-  const label =
-    p.grade === "exact"
-      ? "Exact"
-      : p.grade === "outcome"
-        ? "Result"
-        : p.grade === "wrong"
-          ? "Miss"
-          : null
+function visualBadge(visual) {
+  if (visual === "exact") {
+    return { text: "3 points for exact score", className: "text-emerald-300" }
+  }
+  if (visual === "win") {
+    return { text: "1 point for win predict", className: "text-blue-300" }
+  }
+  if (visual === "draw") {
+    return { text: "1 point for draw predict", className: "text-amber-300" }
+  }
+  if (visual === "wrong") {
+    return { text: "Wrong", className: "text-rose-300" }
+  }
+  return null
+}
+
+function PredictionRow({ p, finished }) {
+  const visual = predictionVisual(p)
+  const badge = finished ? visualBadge(visual) : null
 
   return (
     <li
-      className={`rounded-lg border px-3 py-2 ring-1 ring-inset transition ${gradeStyles(p.grade)}`}
+      className={`rounded-lg border px-3 py-2 ring-1 ring-inset transition ${visualStyles(visual)}`}
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-start justify-between gap-2">
         <span className="truncate text-sm font-semibold text-zinc-100">
           {p.name}
         </span>
-        {finished && label && (
+        {badge && (
           <span
-            className={`shrink-0 text-[10px] font-bold uppercase tracking-wide ${
-              p.grade === "wrong" ? "text-rose-300" : "text-emerald-300"
-            }`}
+            className={`shrink-0 max-w-[52%] text-right text-[10px] font-semibold leading-tight ${badge.className}`}
           >
-            {label}
+            {badge.text}
           </span>
         )}
       </div>
       <p className="mt-1 font-mono text-sm tabular-nums text-zinc-200">
         {p.homeGoals} — {p.awayGoals}
-        {finished && finalScore && p.points > 0 && (
-          <span className="ml-2 text-xs text-emerald-400/90">+{p.points}pt</span>
-        )}
       </p>
     </li>
   )
@@ -319,10 +347,10 @@ export function PredictionModal({ match, onClose, onResultSet }) {
                       id="pred-home"
                       type="number"
                       min={0}
-                      max={20}
+                      max={MAX_GOALS}
                       required
                       value={homeGoals}
-                      onChange={(e) => setHomeGoals(e.target.value)}
+                      onChange={(e) => setHomeGoals(parseGoalInput(e.target.value))}
                       className="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-center font-mono text-lg font-bold tabular-nums text-white outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/30"
                     />
                   </div>
@@ -337,10 +365,10 @@ export function PredictionModal({ match, onClose, onResultSet }) {
                       id="pred-away"
                       type="number"
                       min={0}
-                      max={20}
+                      max={MAX_GOALS}
                       required
                       value={awayGoals}
-                      onChange={(e) => setAwayGoals(e.target.value)}
+                      onChange={(e) => setAwayGoals(parseGoalInput(e.target.value))}
                       className="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-center font-mono text-lg font-bold tabular-nums text-white outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/30"
                     />
                   </div>
@@ -384,21 +412,21 @@ export function PredictionModal({ match, onClose, onResultSet }) {
                     <input
                       type="number"
                       min={0}
-                      max={20}
+                      max={MAX_GOALS}
                       required
                       placeholder="Home goals"
                       value={adminHome}
-                      onChange={(e) => setAdminHome(e.target.value)}
+                      onChange={(e) => setAdminHome(parseGoalInput(e.target.value))}
                       className="rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-center font-mono text-white"
                     />
                     <input
                       type="number"
                       min={0}
-                      max={20}
+                      max={MAX_GOALS}
                       required
                       placeholder="Away goals"
                       value={adminAway}
-                      onChange={(e) => setAdminAway(e.target.value)}
+                      onChange={(e) => setAdminAway(parseGoalInput(e.target.value))}
                       className="rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-center font-mono text-white"
                     />
                   </div>
@@ -421,7 +449,7 @@ export function PredictionModal({ match, onClose, onResultSet }) {
               </h3>
               <p className="text-[11px] text-zinc-500">
                 {finished
-                  ? "Green = exact or correct result · Red = wrong"
+                  ? "Green = exact · Blue = win predict · Yellow = draw predict · Red = wrong"
                   : "Updates when someone submits"}
               </p>
             </div>
@@ -433,12 +461,7 @@ export function PredictionModal({ match, onClose, onResultSet }) {
               ) : (
                 <ul className="space-y-2">
                   {predictions.map((p) => (
-                    <PredictionRow
-                      key={p.id}
-                      p={p}
-                      finished={finished}
-                      finalScore={finalScore}
-                    />
+                    <PredictionRow key={p.id} p={p} finished={finished} />
                   ))}
                 </ul>
               )}
