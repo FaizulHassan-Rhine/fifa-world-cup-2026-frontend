@@ -2,11 +2,16 @@ import { useCallback, useMemo, useState } from "react"
 import { GROUP_MATCHES } from "../data/groupMatches.js"
 import { buildFullSchedule } from "../data/matches.js"
 import { GroupStandings } from "../components/GroupStandings.jsx"
+import { LiveWorldCupPanel } from "../components/LiveWorldCupPanel.jsx"
 import { MatchCard } from "../components/MatchCard.jsx"
 import { PredictionModal } from "../components/PredictionModal.jsx"
 import { PredictorLeaderboard } from "../components/PredictorLeaderboard.jsx"
+import { useLiveWorldCupMatchDetails } from "../hooks/useLiveWorldCupMatchDetails.js"
 import { useWorldCupFixturePool } from "../hooks/useWorldCupFixturePool.js"
-import { findLiveForMatch } from "../utils/mergeLiveFixtures.js"
+import {
+  findLiveForMatch,
+  findLiveWorldCupFixtures,
+} from "../utils/mergeLiveFixtures.js"
 
 const SECTION_NAV = [
   { href: "#standings", label: "Groups" },
@@ -55,12 +60,35 @@ export default function WorldCupPage() {
   const onPredictionUpdate = useCallback(() => {
     setStandingsRefresh((k) => k + 1)
   }, [])
-  const { index, error, loading, lastUpdated, reload } = useWorldCupFixturePool({
-    leagueId: wcLeagueId,
-    enabled: liveActive,
-  })
+  const { index, entries, error, loading, lastUpdated, reload } =
+    useWorldCupFixturePool({
+      leagueId: wcLeagueId,
+      enabled: liveActive,
+    })
 
   const apiLiveOk = liveActive && lastUpdated != null && !error
+
+  const liveWorldCupMatches = useMemo(
+    () => (apiLiveOk ? findLiveWorldCupFixtures(entries) : []),
+    [apiLiveOk, entries],
+  )
+
+  const liveFixtureIds = useMemo(
+    () =>
+      liveWorldCupMatches
+        .map((m) => m.fixtureId)
+        .filter((id) => id != null),
+    [liveWorldCupMatches],
+  )
+
+  const {
+    details: liveMatchDetails,
+    error: liveDetailError,
+    loading: liveDetailLoading,
+  } = useLiveWorldCupMatchDetails(
+    liveFixtureIds,
+    apiLiveOk && liveFixtureIds.length > 0,
+  )
 
   const byPhase = useMemo(() => {
     const group = schedule.filter((m) => m.phase === "group")
@@ -110,9 +138,6 @@ export default function WorldCupPage() {
       >
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="text-sm font-medium text-zinc-200">
-              Live &amp; results
-            </span>
             {apiLiveOk ? (
               <span
                 className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-400/30"
@@ -122,7 +147,7 @@ export default function WorldCupPage() {
                   className="h-2 w-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]"
                   aria-hidden
                 />
-                Active
+                Scores loaded
               </span>
             ) : null}
           </div>
@@ -140,17 +165,53 @@ export default function WorldCupPage() {
                 {loading
                   ? "Fetching…"
                   : liveActive
-                    ? "Refresh scores from API"
-                    : "Load live scores from API"}
+                    ? "Refresh live score"
+                    : "Load live score"}
               </button>
             </div>
             {!liveActive ? (
               <p className="max-w-xl text-[11px] text-zinc-500 sm:text-right">
-                No API calls until you click — saves your daily quota.
+                Fetches the live World Cup match (score, goals, squads when
+                available). No API calls until you click.
               </p>
             ) : null}
           </div>
         </div>
+
+        {error && (
+          <p className="rounded-lg border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-300">
+            {error}
+          </p>
+        )}
+
+        {apiLiveOk && liveWorldCupMatches.length > 0 && (
+          <>
+            {liveWorldCupMatches.map((m) => {
+              const detail =
+                m.fixtureId != null
+                  ? liveMatchDetails.get(m.fixtureId)
+                  : undefined
+              return (
+                <LiveWorldCupPanel
+                  key={m.fixtureId}
+                  match={m}
+                  events={detail?.events ?? []}
+                  lineups={detail?.lineups ?? []}
+                  detailLoading={liveDetailLoading}
+                  detailError={liveDetailError}
+                />
+              )
+            })}
+          </>
+        )}
+
+        {apiLiveOk && liveWorldCupMatches.length === 0 && (
+          <p className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
+            No World Cup match is live right now. Scores on fixture cards are
+            still updated from today&apos;s and tomorrow&apos;s fixtures — click
+            refresh during a live game.
+          </p>
+        )}
 
         <GroupStandings refreshKey={standingsRefresh} />
 

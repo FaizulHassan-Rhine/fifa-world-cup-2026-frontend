@@ -17,6 +17,7 @@ export function useWorldCupFixturePool(opts = {}) {
   const [index, setIndex] = useState(
     /** @type {ReturnType<typeof buildFixtureIndex>} */ (new Map()),
   )
+  const [entries, setEntries] = useState(/** @type {unknown[]} */ ([]))
   const [error, setError] = useState(/** @type {string | null} */ (null))
   const [loading, setLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState(/** @type {Date | null} */ (null))
@@ -63,6 +64,7 @@ export function useWorldCupFixturePool(opts = {}) {
       }
 
       if (!mounted.current) return
+      setEntries(merged)
       setIndex(buildFixtureIndex(merged))
       setLastUpdated(new Date())
     } catch (e) {
@@ -97,5 +99,5 @@ export function useWorldCupFixturePool(opts = {}) {
     }
   }, [enabled, load])
 
-  return { index, error, loading, lastUpdated, reload: load }
+  return { index, entries, error, loading, lastUpdated, reload: load }
 }

@@ -5,6 +5,17 @@ import { parseKickoffEt } from "./timeFormat.js"
 
 const ZONE_ET = "America/New_York"
 
+/** @type {Set<string>} */
+export const LIVE_MATCH_STATUSES = new Set([
+  "LIVE",
+  "1H",
+  "2H",
+  "HT",
+  "ET",
+  "P",
+  "BT",
+])
+
 const WORLD_CUP_TEAM_CODES = new Set(
   Object.values(GROUPS).flatMap((teams) => teams.map((t) => t.code)),
 )
@@ -53,15 +64,44 @@ function mapFixtureToLive(entry) {
   const statusShort = /** @type {string | undefined} */ (status?.short)
   const elapsed = /** @type {number | null | undefined} */ (status?.elapsed)
 
+  const fixtureId = /** @type {number | undefined} */ (fixture?.id)
+  const homeName = home?.name ?? ch
+  const awayName = away?.name ?? ca
+
   return {
+    fixtureId: typeof fixtureId === "number" ? fixtureId : null,
     day,
     apiHome: ch,
     apiAway: ca,
+    homeName,
+    awayName,
     homeGoals: typeof homeGoals === "number" ? homeGoals : null,
     awayGoals: typeof awayGoals === "number" ? awayGoals : null,
     statusShort: statusShort ?? "",
     elapsed: elapsed ?? null,
   }
+}
+
+/**
+ * World Cup fixtures that are in play right now (for the live detail panel).
+ * @param {unknown[]} fixtureEntries
+ */
+export function findLiveWorldCupFixtures(fixtureEntries) {
+  /** @type {NonNullable<ReturnType<typeof mapFixtureToLive>>[]} */
+  const out = []
+  for (const entry of fixtureEntries) {
+    const live = mapFixtureToLive(entry)
+    if (!live?.fixtureId) continue
+    if (
+      !WORLD_CUP_TEAM_CODES.has(live.apiHome) ||
+      !WORLD_CUP_TEAM_CODES.has(live.apiAway)
+    ) {
+      continue
+    }
+    if (!LIVE_MATCH_STATUSES.has(live.statusShort)) continue
+    out.push(live)
+  }
+  return out
 }
 
 /**

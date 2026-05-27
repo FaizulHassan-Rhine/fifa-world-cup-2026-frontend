@@ -1,27 +1,71 @@
-// Proxied to upstream /fixtures (api-sports: host is already v3.* — no /v3 path segment).
-const PREFIX = "/api/football"
+// Dev: Vite → backend /api/football. Production: Vercel serverless or VITE_API_BASE_URL backend.
+const apiRoot = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || ""
+const PREFIX = apiRoot ? `${apiRoot}/api/football` : "/api/football"
+
+/**
+ * @param {Response} res
+ * @param {string} fallback
+ */
+async function footballApiError(res, fallback) {
+  const text = await res.text().catch(() => "")
+  try {
+    const data = JSON.parse(text)
+    const tokenErr = data?.errors?.token
+    if (tokenErr) {
+      return `API key problem: ${tokenErr} Add API_FOOTBALL_KEY to backend/.env.local (local) or Vercel env, then restart the server.`
+    }
+    if (data?.error && typeof data.error === "string") return data.error
+  } catch {
+    /* not JSON */
+  }
+  if (res.status === 403) {
+    return "Football API denied the request (403). Check API_FOOTBALL_KEY in backend/.env.local or Vercel."
+  }
+  if (res.status === 503) {
+    try {
+      const data = JSON.parse(text)
+      if (data?.error) return String(data.error)
+    } catch {
+      /* ignore */
+    }
+  }
+  return text ? `Football API ${res.status}: ${text.slice(0, 160)}` : fallback
+}
+
+/**
+ * @param {string} path e.g. "/fixtures"
+ * @param {Record<string, string | number | undefined>} [params]
+ * @returns {Promise<{ response?: unknown[] }>}
+ */
+export async function fetchFootballApi(path, params = {}) {
+  const qs = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value != null && value !== "") qs.set(key, String(value))
+  }
+  const query = qs.toString()
+  const url = `${PREFIX}${path}${query ? `?${query}` : ""}`
+  const res = await fetch(url)
+  if (!res.ok) {
+    const msg = await footballApiError(res, `Football API ${res.status}`)
+    throw new Error(msg)
+  }
+  return res.json()
+}
 
 /**
  * @param {Record<string, string | number | undefined>} params
  * @returns {Promise<{ response?: unknown[] }>}
  */
 export async function fetchFixtures(params) {
-  const qs = new URLSearchParams()
-  if (params.live != null) qs.set("live", String(params.live))
-  if (params.date) qs.set("date", params.date)
-  if (params.league != null) qs.set("league", String(params.league))
-  if (params.season != null) qs.set("season", String(params.season))
-  if (params.from) qs.set("from", params.from)
-  if (params.to) qs.set("to", params.to)
-  if (params.timezone) qs.set("timezone", params.timezone)
+  return fetchFootballApi("/fixtures", params)
+}
 
-  const url = `${PREFIX}/fixtures?${qs}`
-  const res = await fetch(url)
-  if (!res.ok) {
-    const text = await res.text().catch(() => "")
-    throw new Error(
-      text ? `Football API ${res.status}: ${text.slice(0, 200)}` : `Football API ${res.status}`,
-    )
-  }
-  return res.json()
+/** @param {number} fixtureId */
+export function fetchFixtureEvents(fixtureId) {
+  return fetchFootballApi("/fixtures/events", { fixture: fixtureId })
+}
+
+/** @param {number} fixtureId */
+export function fetchFixtureLineups(fixtureId) {
+  return fetchFootballApi("/fixtures/lineups", { fixture: fixtureId })
 }
