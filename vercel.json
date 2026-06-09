@@ -1,6 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/api/espn/stream", "destination": "/api/espn-stream" },
+    { "source": "/api/espn/(.*)", "destination": "/api/espn-proxy?path=$1" },
+    { "source": "/api/football/(.*)", "destination": "/api/football-proxy?path=$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

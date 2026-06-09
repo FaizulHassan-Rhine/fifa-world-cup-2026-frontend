@@ -1,7 +1,36 @@
 /**
- * Vercel serverless proxy for API-Football — mirrors `vite.config.js` dev proxy.
- * Set `API_FOOTBALL_KEY` and optional `API_FOOTBALL_MODE` in the Vercel project env.
+ * Vercel API-Football proxy — flat handler (nested catch-all unreliable on Vercel).
  */
+/** @param {import("@vercel/node").VercelRequest} req */
+function resolveUpstreamPath(req) {
+  const pathParam = req.query.path
+  if (pathParam != null && pathParam !== "") {
+    const segments = Array.isArray(pathParam) ? pathParam : String(pathParam).split("/")
+    return `/${segments.filter(Boolean).join("/")}`
+  }
+
+  const host = req.headers.host || "localhost"
+  const full = new URL(req.url || "/", `https://${host}`)
+  const fromUrl = full.pathname.replace(/^\/api\/football(-proxy)?/, "") || "/"
+  return fromUrl.startsWith("/") ? fromUrl : `/${fromUrl}`
+}
+
+/** @param {import("@vercel/node").VercelRequest} req */
+function buildQueryString(req) {
+  const qs = new URLSearchParams()
+  for (const [key, value] of Object.entries(req.query)) {
+    if (key === "path" || value == null) continue
+    if (Array.isArray(value)) {
+      for (const v of value) qs.append(key, String(v))
+    } else {
+      qs.set(key, String(value))
+    }
+  }
+  const query = qs.toString()
+  return query ? `?${query}` : ""
+}
+
+/** @param {import("@vercel/node").VercelRequest} req @param {import("@vercel/node").VercelResponse} res */
 export default async function handler(req, res) {
   if (req.method !== "GET" && req.method !== "HEAD") {
     res.status(405).setHeader("Allow", "GET, HEAD").end("Method Not Allowed")
@@ -14,9 +43,7 @@ export default async function handler(req, res) {
     ""
   const provider = (process.env.API_FOOTBALL_MODE || "apisports").toLowerCase()
 
-  const host = req.headers.host || "localhost"
-  const full = new URL(req.url || "/", `https://${host}`)
-  let upstreamPath = full.pathname.replace(/^\/api\/football/, "") || "/"
+  let upstreamPath = resolveUpstreamPath(req)
 
   if (provider === "rapidapi") {
     if (upstreamPath.startsWith("/fixtures")) {
@@ -31,7 +58,7 @@ export default async function handler(req, res) {
       ? "https://v3.football.api-sports.io"
       : "https://api-football-v1.p.rapidapi.com"
 
-  const targetUrl = targetBase + upstreamPath + full.search
+  const targetUrl = targetBase + upstreamPath + buildQueryString(req)
 
   /** @type {Record<string, string>} */
   const headers = {}

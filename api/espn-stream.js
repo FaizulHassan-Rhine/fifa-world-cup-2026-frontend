@@ -1,9 +1,7 @@
 /**
- * Server-Sent Events stream — pushes ESPN scoreboard JSON every 5s.
+ * Server-Sent Events — ESPN scoreboard push every 5s.
  * ?scope=all → global football; default → FIFA World Cup.
  */
-import { DateTime } from "luxon"
-
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2"
 
 const SCOREBOARD_PATHS = {
@@ -12,6 +10,16 @@ const SCOREBOARD_PATHS = {
 }
 
 const POLL_MS = 5_000
+
+/**
+ * @param {Date} date
+ */
+function espnDateParam(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}${m}${d}`
+}
 
 /**
  * @param {unknown[]} lists
@@ -41,10 +49,12 @@ function mergeEvents(lists) {
  */
 async function fetchScoreboard(scope) {
   if (scope === "all") {
-    const now = DateTime.now()
-    const dates = [-1, 0, 1].map((offset) =>
-      now.plus({ days: offset }).toFormat("yyyyLLdd"),
-    )
+    const now = new Date()
+    const dates = [-1, 0, 1].map((offset) => {
+      const d = new Date(now)
+      d.setDate(d.getDate() + offset)
+      return espnDateParam(d)
+    })
     const lists = await Promise.all(
       dates.map(async (date) => {
         const res = await fetch(`${SCOREBOARD_PATHS.all}?dates=${date}`, {
@@ -63,15 +73,14 @@ async function fetchScoreboard(scope) {
   return res.json()
 }
 
+/** @param {import("@vercel/node").VercelRequest} req @param {import("@vercel/node").VercelResponse} res */
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.status(405).setHeader("Allow", "GET").end("Method Not Allowed")
     return
   }
 
-  const host = req.headers.host || "localhost"
-  const full = new URL(req.url || "/", `https://${host}`)
-  const scope = full.searchParams.get("scope") === "all" ? "all" : "worldcup"
+  const scope = req.query.scope === "all" ? "all" : "worldcup"
 
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
