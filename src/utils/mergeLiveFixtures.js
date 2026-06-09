@@ -145,18 +145,22 @@ export function findLiveForMatch(match, index) {
   for (const c of candidates) {
     if (c.apiHome === homeCode && c.apiAway === awayCode) {
       return {
+        fixtureId: c.fixtureId ?? null,
         homeGoals: c.homeGoals,
         awayGoals: c.awayGoals,
         statusShort: c.statusShort,
         elapsed: c.elapsed,
+        elapsedDisplay: c.elapsedDisplay ?? null,
       }
     }
     if (c.apiHome === awayCode && c.apiAway === homeCode) {
       return {
+        fixtureId: c.fixtureId ?? null,
         homeGoals: c.awayGoals,
         awayGoals: c.homeGoals,
         statusShort: c.statusShort,
         elapsed: c.elapsed,
+        elapsedDisplay: c.elapsedDisplay ?? null,
       }
     }
   }

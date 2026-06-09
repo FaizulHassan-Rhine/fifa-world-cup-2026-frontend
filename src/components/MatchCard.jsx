@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { STADIUMS } from "../data/stadiums.js"
 import { flagUrl } from "../utils/flags.js"
 import {
@@ -5,6 +6,10 @@ import {
   formatMatchTime,
   parseKickoffEt,
 } from "../utils/timeFormat.js"
+import { PHASE_CARD_CHROME } from "../utils/matchCardChrome.js"
+import { MatchCardBodyTabs } from "./MatchCardBodyTabs.jsx"
+import { MatchCardShell } from "./MatchCardShell.jsx"
+import { MatchScoreCenter } from "./MatchScoreCenter.jsx"
 
 function PinIcon({ className }) {
   return (
@@ -109,51 +114,6 @@ const phaseTheme = {
   },
 }
 
-function LiveScoreBadge({ live }) {
-  if (!live) return null
-  const { homeGoals, awayGoals, statusShort, elapsed } = live
-  const isLive =
-    statusShort === "LIVE" ||
-    statusShort === "1H" ||
-    statusShort === "2H" ||
-    statusShort === "ET"
-  const hasNums =
-    typeof homeGoals === "number" && typeof awayGoals === "number"
-  if (!hasNums && !statusShort) return null
-  if (!hasNums && statusShort === "NS") return null
-
-  const scoreText = hasNums ? `${homeGoals} – ${awayGoals}` : null
-  const timeBit =
-    isLive && elapsed != null ? `${elapsed}'` : statusShort || ""
-
-  return (
-    <div className="flex flex-col items-center gap-0.5">
-      {scoreText && (
-        <span className="text-xl font-black tabular-nums tracking-tight text-white sm:text-2xl">
-          {scoreText}
-        </span>
-      )}
-      <div className="flex flex-wrap items-center justify-center gap-1.5">
-        {isLive && (
-          <span className="rounded-md bg-rose-500/25 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-rose-200 ring-1 ring-rose-400/35">
-            Live
-          </span>
-        )}
-        {timeBit && (
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-            {timeBit}
-          </span>
-        )}
-        {!isLive && statusShort && statusShort !== "NS" && (
-          <span className="rounded-md bg-zinc-700/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-zinc-300 ring-1 ring-white/10">
-            {statusShort}
-          </span>
-        )}
-      </div>
-    </div>
-  )
-}
-
 function ScheduleBlock({ dt, venueTz, venueCity, theme }) {
   const localDate = formatMatchDate(dt, venueTz)
   const localTime = formatMatchTime(dt, venueTz)
@@ -200,18 +160,35 @@ function ScheduleBlock({ dt, venueTz, venueCity, theme }) {
   )
 }
 
-export function MatchCard({ match, live, onClick }) {
+export function MatchCard({
+  match,
+  live,
+  onClick,
+  lineups = [],
+  keyEvents = [],
+  commentary = [],
+  stats = null,
+  lineupsLoading = false,
+}) {
   const venue = STADIUMS[match.venueKey]
   const dt = parseKickoffEt(match.kickoffEt)
   const theme = phaseTheme[match.phase] || phaseTheme.group
+  const chrome = PHASE_CARD_CHROME[match.phase] || PHASE_CARD_CHROME.group
   const interactive = typeof onClick === "function"
-  const hasLiveScore = live && (
-    (typeof live.homeGoals === "number" && typeof live.awayGoals === "number") ||
-    (live.statusShort && live.statusShort !== "NS")
-  )
+  const defaultTab = useMemo(() => {
+    const hasEvents = keyEvents.some(
+      (e) =>
+        e &&
+        typeof e === "object" &&
+        /** @type {{ type?: string }} */ (e).type !== "divider",
+    )
+    return hasEvents ? "details" : "lineups"
+  }, [keyEvents])
 
   return (
-    <article
+    <MatchCardShell
+      chrome={chrome}
+      className={`group h-full hover:-translate-y-0.5 ${theme.glow}`}
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
       onClick={interactive ? onClick : undefined}
@@ -225,18 +202,15 @@ export function MatchCard({ match, live, onClick }) {
             }
           : undefined
       }
-      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/8 bg-linear-to-b from-zinc-800/30 to-zinc-950/95 shadow-lg shadow-black/30 ring-1 ring-white/4 backdrop-blur-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:border-white/12 hover:shadow-2xl ${theme.glow} ${interactive ? "cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400/80" : ""}`}
+      articleClassName={
+        interactive
+          ? "cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400/80"
+          : ""
+      }
     >
-      <div
-        className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r ${theme.bar}`}
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(255,255,255,0.06),transparent)]"
-        aria-hidden
-      />
-
-      <header className="relative flex shrink-0 items-start justify-between gap-2 border-b border-white/6 px-3 py-2.5 sm:px-3.5 sm:py-3">
+      <header
+        className={`relative flex shrink-0 items-start justify-between gap-2 border-b px-3 py-2.5 sm:px-3.5 sm:py-3 ${chrome.header}`}
+      >
         <span
           className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold tabular-nums tracking-wide ring-1 ring-inset sm:text-[11px] ${theme.chip}`}
         >
@@ -258,17 +232,15 @@ export function MatchCard({ match, live, onClick }) {
         {/* Teams face-off — flags side by side */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           <TeamFace team={match.home} align="start" />
-          <div className="flex shrink-0 flex-col items-center justify-center gap-1 px-0.5 sm:px-1">
-            {hasLiveScore ? (
-              <LiveScoreBadge live={live} />
-            ) : (
-              <span
-                className={`rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.15em] shadow-md sm:px-3 sm:text-[10px] sm:tracking-[0.2em] ${theme.vs}`}
-              >
-                vs
-              </span>
-            )}
-          </div>
+          <MatchScoreCenter
+            homeGoals={live?.homeGoals ?? null}
+            awayGoals={live?.awayGoals ?? null}
+            statusShort={live?.statusShort ?? "NS"}
+            elapsed={live?.elapsed ?? null}
+            elapsedDisplay={live?.elapsedDisplay ?? null}
+            kickoffDt={dt}
+            size="md"
+          />
           <TeamFace team={match.away} align="end" />
         </div>
 
@@ -278,6 +250,22 @@ export function MatchCard({ match, live, onClick }) {
           venueCity={venue.city}
           theme={theme}
         />
+
+        <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+          <MatchCardBodyTabs
+            key={`${match.matchNumber}-${defaultTab}`}
+            lineups={lineups}
+            keyEvents={keyEvents}
+            commentary={commentary}
+            stats={stats}
+            loading={lineupsLoading}
+            defaultTab={defaultTab}
+            teamFlags={{
+              home: { code: match.home.code, flagUrl: flagUrl(match.home.code) },
+              away: { code: match.away.code, flagUrl: flagUrl(match.away.code) },
+            }}
+          />
+        </div>
 
         <div className="mt-auto flex items-start gap-2 rounded-lg bg-zinc-950/40 px-2.5 py-2 ring-1 ring-inset ring-white/5">
           <PinIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400/80" />
@@ -293,6 +281,6 @@ export function MatchCard({ match, live, onClick }) {
           </div>
         </div>
       </div>
-    </article>
+    </MatchCardShell>
   )
 }
