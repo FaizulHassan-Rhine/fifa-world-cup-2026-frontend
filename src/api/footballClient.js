@@ -1,6 +1,7 @@
-// Dev: Vite → backend /api/football. Production: Vercel serverless or VITE_API_BASE_URL backend.
-const apiRoot = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || ""
-const PREFIX = apiRoot ? `${apiRoot}/api/football` : "/api/football"
+import { FOOTBALL_PREFIX } from "./apiBases.js"
+
+// Same-origin proxy — not the MongoDB predictions backend.
+const PREFIX = FOOTBALL_PREFIX
 
 /**
  * @param {Response} res

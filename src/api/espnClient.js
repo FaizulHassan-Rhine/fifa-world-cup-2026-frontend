@@ -1,6 +1,7 @@
-// Dev: Vite → /api/espn proxy. Production: Vercel serverless.
-const apiRoot = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || ""
-const PREFIX = apiRoot ? `${apiRoot}/api/espn` : "/api/espn"
+import { ESPN_PREFIX } from "./apiBases.js"
+
+// Always same-origin — Vite dev proxy or Vercel /api/espn-proxy (not the MongoDB backend).
+const PREFIX = ESPN_PREFIX
 
 const SCOREBOARD_PATHS = {
   worldcup: "/sports/soccer/fifa.world/scoreboard",

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { DateTime } from "luxon"
+import { ESPN_PREFIX } from "../api/apiBases.js"
 import {
   buildEspnFixtureIndex,
   buildEspnMatchDetailsMap,
@@ -21,14 +22,13 @@ const SCOREBOARD_PATHS = {
   all: "/sports/soccer/all/scoreboard",
 }
 
-const apiRoot = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || ""
-const espnPrefix = apiRoot ? `${apiRoot}/api/espn` : "/api/espn"
+const espnPrefix = ESPN_PREFIX
 
 /**
  * @param {"worldcup" | "all"} scope
  */
 function streamUrlFor(scope) {
-  const base = apiRoot ? `${apiRoot}/api/espn/stream` : "/api/espn/stream"
+  const base = `${ESPN_PREFIX}/stream`
   return scope === "all" ? `${base}?scope=all` : base
 }
 

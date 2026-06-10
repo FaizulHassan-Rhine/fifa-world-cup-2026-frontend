@@ -1,5 +1,6 @@
-const apiRoot = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || ""
-const BASE = apiRoot ? `${apiRoot}/api` : "/api"
+import { predictionsApiBase } from "./apiBases.js"
+
+const BASE = predictionsApiBase()
 
 async function parseJson(res) {
   const data = await res.json().catch(() => ({}))
