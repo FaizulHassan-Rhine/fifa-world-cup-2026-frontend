@@ -42,7 +42,7 @@ export function MatchScoreCenter({
       ? "text-3xl sm:text-4xl"
       : size === "sm"
         ? "text-xl"
-        : "text-2xl"
+        : "text-xl sm:text-2xl"
 
   let timeLabel = ""
   let timeClass = "text-zinc-500"
@@ -70,7 +70,7 @@ export function MatchScoreCenter({
   }
 
   return (
-    <div className="flex shrink-0 flex-col items-center justify-center gap-1 px-1">
+    <div className="flex w-[4.25rem] shrink-0 flex-col items-center justify-center gap-0.5 px-0.5 sm:w-auto sm:gap-1 sm:px-1">
       {scoreText ? (
         <span
           className={`font-black tabular-nums tracking-tight text-white ${scoreSize}`}
@@ -92,7 +92,7 @@ export function MatchScoreCenter({
 
       {timeLabel && (
         <span
-          className={`text-center text-[10px] font-semibold tabular-nums ${timeClass}`}
+          className={`max-w-full truncate text-center text-[9px] font-semibold tabular-nums sm:text-[10px] ${timeClass}`}
         >
           {timeLabel}
         </span>

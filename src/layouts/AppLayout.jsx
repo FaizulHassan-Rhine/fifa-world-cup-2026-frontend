@@ -15,7 +15,7 @@ export function AppLayout() {
   const isAllFootball = pathname.startsWith("/football")
 
   return (
-    <div className="min-h-screen bg-zinc-950 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-emerald-950/30 via-zinc-950 to-zinc-950 text-zinc-200">
+    <div className="min-h-screen overflow-x-hidden bg-zinc-950 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-emerald-950/30 via-zinc-950 to-zinc-950 text-zinc-200">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-zinc-900"

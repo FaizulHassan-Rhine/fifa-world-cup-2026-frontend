@@ -559,10 +559,12 @@ export function PitchLineup({
     })
   }
 
-  const height = compact ? "min-h-[560px]" : "min-h-[620px]"
+  const height = compact
+    ? "min-h-[280px] sm:min-h-[400px] lg:min-h-[560px]"
+    : "min-h-[360px] sm:min-h-[520px] lg:min-h-[620px]"
 
   return (
-    <div className={className}>
+    <div className={`min-w-0 max-w-full ${className}`}>
       {hasXi && (
         <p className="mb-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-zinc-500">
           Lineups

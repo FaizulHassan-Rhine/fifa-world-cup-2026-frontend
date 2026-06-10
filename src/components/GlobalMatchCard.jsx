@@ -23,16 +23,16 @@ function TeamFace({ logoUrl, code, name, align }) {
           alt=""
           width={56}
           height={36}
-          className="h-8 w-12 shrink-0 rounded-md object-cover shadow-lg ring-1 ring-black/50 sm:h-9 sm:w-14"
+          className="h-7 w-10 shrink-0 rounded-md object-cover shadow-lg ring-1 ring-black/50 sm:h-9 sm:w-14"
           loading="lazy"
         />
       ) : (
         <span
-          className="h-8 w-12 shrink-0 rounded-md bg-zinc-800 ring-1 ring-white/10 sm:h-9 sm:w-14"
+          className="h-7 w-10 shrink-0 rounded-md bg-zinc-800 ring-1 ring-white/10 sm:h-9 sm:w-14"
           aria-hidden
         />
       )}
-      <span className="line-clamp-2 text-[11px] font-bold leading-tight text-zinc-100 sm:text-xs">
+      <span className="line-clamp-2 w-full text-[10px] font-bold leading-tight text-zinc-100 sm:text-xs">
         {name}
       </span>
     </div>
@@ -63,6 +63,7 @@ function TeamFace({ logoUrl, code, name, align }) {
  *   commentary?: import("../utils/normalizeEspnCommentary.js").ReturnType<import("../utils/normalizeEspnCommentary.js").normalizeEspnCommentary>
  *   stats?: import("../utils/normalizeEspnMatchStats.js").ReturnType<import("../utils/normalizeEspnMatchStats.js").normalizeEspnBoxscoreStats> | null
  *   lineupsLoading?: boolean
+ *   className?: string
  * }} props
  */
 export function GlobalMatchCard({
@@ -72,6 +73,7 @@ export function GlobalMatchCard({
   commentary = [],
   stats = null,
   lineupsLoading = false,
+  className = "",
 }) {
   const isLive = ["LIVE", "1H", "2H", "HT", "ET", "P"].includes(match.statusShort)
   const kickoff = match.kickoffIso
@@ -94,31 +96,34 @@ export function GlobalMatchCard({
   const chrome = ALL_FOOTBALL_CARD_CHROME
 
   return (
-    <MatchCardShell chrome={chrome} className="h-full hover:-translate-y-0.5">
+    <MatchCardShell
+      chrome={chrome}
+      className={`h-full min-w-0 w-full max-w-full hover:-translate-y-0.5 ${className}`}
+    >
       <header
-        className={`relative flex items-center justify-between gap-2 border-b px-3 py-2 ${chrome.header}`}
+        className={`relative flex min-w-0 items-center justify-between gap-2 border-b px-3 py-2 ${chrome.header}`}
       >
-        <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+        <span className="min-w-0 flex-1 truncate text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
           {match.leagueLabel ?? "Football"}
         </span>
         {isLive ? (
-          <span className="inline-flex items-center gap-1 rounded-md bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-rose-200 ring-1 ring-rose-400/30">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-rose-200 ring-1 ring-rose-400/30">
             <span className="h-1.5 w-1.5 rounded-full bg-rose-400" aria-hidden />
             Live
           </span>
         ) : match.statusShort === "FT" ? (
-          <span className="rounded-md bg-zinc-700/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-zinc-300">
+          <span className="shrink-0 rounded-md bg-zinc-700/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-zinc-300">
             FT
           </span>
         ) : (
-          <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-300">
+          <span className="shrink-0 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-300">
             Upcoming
           </span>
         )}
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 py-3">
-        <div className="flex items-center gap-2">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 px-3 py-3">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <TeamFace
             logoUrl={match.homeLogo}
             code={match.apiHome}

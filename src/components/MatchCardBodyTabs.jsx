@@ -41,12 +41,12 @@ export function MatchCardBodyTabs({
   ]
 
   const scrollClass =
-    "max-h-64 overflow-y-auto overscroll-contain rounded-lg ring-1 ring-zinc-800/80 [scrollbar-width:thin] [scrollbar-color:rgb(63_63_70)_transparent]"
+    "max-h-64 min-w-0 overflow-x-hidden overflow-y-auto overscroll-contain rounded-lg ring-1 ring-zinc-800/80 [scrollbar-width:thin] [scrollbar-color:rgb(63_63_70)_transparent]"
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <div
-        className="flex gap-0.5 rounded-lg bg-zinc-900/70 p-1 ring-1 ring-inset ring-white/6"
+        className="flex min-w-0 gap-0.5 rounded-lg bg-zinc-900/70 p-1 ring-1 ring-inset ring-white/6"
         role="tablist"
         aria-label="Match details"
       >
@@ -62,7 +62,7 @@ export function MatchCardBodyTabs({
                 e.stopPropagation()
                 setTab(t.id)
               }}
-              className={`flex-1 rounded-md px-1 py-1.5 text-[9px] font-semibold transition sm:text-[10px] ${
+              className={`min-w-0 flex-1 truncate rounded-md px-0.5 py-1.5 text-[8px] font-semibold transition sm:px-1 sm:text-[10px] ${
                 active
                   ? "bg-zinc-800 text-white ring-1 ring-white/10"
                   : "text-zinc-500 hover:text-zinc-300"

@@ -17,7 +17,7 @@ export function MatchCardShell({
 }) {
   return (
     <div
-      className={`rounded-2xl p-px transition duration-300 ease-out ${chrome.frame} ${chrome.hover ?? ""} ${className}`}
+      className={`min-w-0 max-w-full rounded-2xl p-px transition duration-300 ease-out ${chrome.frame} ${chrome.hover ?? ""} ${className}`}
     >
       <article
         {...articleProps}

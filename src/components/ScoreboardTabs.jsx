@@ -94,10 +94,10 @@ export function ScoreboardTabs({
   ]
 
   return (
-    <div className="flex flex-col items-end gap-1.5">
-      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-0.5 text-[10px] text-zinc-500">
-        <span>Updated: {updatedLabel}</span>
-        <span className="text-zinc-600">·</span>
+    <div className="flex w-full min-w-0 flex-col gap-1.5 sm:w-auto sm:items-end">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] text-zinc-500 sm:justify-end sm:text-[10px]">
+        <span className="min-w-0 break-words">Updated: {updatedLabel}</span>
+        <span className="hidden text-zinc-600 sm:inline">·</span>
         <span className="inline-flex items-center gap-1">
           {loading && (
             <span
@@ -110,10 +110,11 @@ export function ScoreboardTabs({
       </div>
 
       <div
-        className="inline-flex items-center gap-0.5 rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-1 shadow-lg shadow-black/20"
+        className="w-full min-w-0 overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch] sm:w-auto"
         role="tablist"
         aria-label="Match scoreboard"
       >
+        <div className="inline-flex min-w-full items-center gap-0.5 rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-1 shadow-lg shadow-black/20 sm:min-w-0">
         {tabs.map((tab) => {
           const isActive = active === tab.id
           return (
@@ -123,7 +124,7 @@ export function ScoreboardTabs({
               role="tab"
               aria-selected={isActive}
               onClick={() => onChange(tab.id)}
-              className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition sm:gap-2 sm:px-3 sm:text-xs ${
                 isActive
                   ? "bg-zinc-800/90 text-white ring-1 ring-white/10"
                   : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
@@ -139,6 +140,7 @@ export function ScoreboardTabs({
             </button>
           )
         })}
+        </div>
       </div>
     </div>
   )

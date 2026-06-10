@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react"
 import { GlobalMatchCard } from "../components/GlobalMatchCard.jsx"
-import { LiveWorldCupPanel } from "../components/LiveWorldCupPanel.jsx"
 import { ScoreboardTabs } from "../components/ScoreboardTabs.jsx"
 import { useEspnLineups } from "../hooks/useEspnLineups.js"
 import { useEspnScoreboardStream } from "../hooks/useEspnScoreboardStream.js"
@@ -74,10 +73,10 @@ export default function AllFootballPage() {
   return (
     <main
       id="main"
-      className="mx-auto max-w-7xl space-y-4 px-4 pb-20 pt-8 sm:px-6 lg:px-8"
+      className="mx-auto w-full min-w-0 max-w-7xl space-y-4 overflow-x-hidden px-4 pb-20 pt-8 sm:px-6 lg:px-8"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
           <h2 className="text-lg font-bold text-white">{tabTitle}</h2>
           <p className="mt-0.5 text-[11px] text-zinc-500">
             Global soccer from ESPN · all leagues · auto-refresh
@@ -100,41 +99,12 @@ export default function AllFootballPage() {
         </p>
       )}
 
-      {scoreboardTab === "live" && apiOk && espn.liveMatches.length > 0 && (
-        <div className="space-y-4">
-          {espn.liveMatches.map((m) => {
-            const match = /** @type {Record<string, unknown>} */ (m)
-            const fixtureId = /** @type {number} */ (match.fixtureId)
-            const detail = espn.matchDetails.get(fixtureId)
-            const events =
-              detail?.events ??
-              /** @type {{ events?: unknown[] }} */ (match).events ??
-              []
-            const panelLineups = espnLineups.get(fixtureId) ?? []
-            const panelKeyEvents = espnKeyEvents.get(fixtureId) ?? []
-            return (
-              <LiveWorldCupPanel
-                key={fixtureId}
-                match={match}
-                events={events}
-                lineups={panelLineups}
-                keyEvents={panelKeyEvents}
-                detailLoading={lineupsLoading && panelLineups.length === 0}
-                dataSource="espn"
-                homeLogo={/** @type {string | null | undefined} */ (match.homeLogo)}
-                awayLogo={/** @type {string | null | undefined} */ (match.awayLogo)}
-                subtitle={/** @type {string | undefined} */ (match.leagueLabel)}
-              />
-            )
-          })}
-        </div>
-      )}
-
       {tabMatches.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
           {tabMatches.map((match) => (
             <GlobalMatchCard
               key={match.fixtureId}
+              className="min-w-0"
               match={match}
               lineups={espnLineups.get(match.fixtureId) ?? []}
               keyEvents={espnKeyEvents.get(match.fixtureId) ?? []}
