@@ -82,8 +82,10 @@ function tierForwardness(tier, maxTier) {
  * @param {number | string | null | undefined} place
  * @param {"top" | "bottom"} half
  * @param {string | undefined | null} [formation]
+ * @param {{ compact?: boolean }} [options]
  */
-export function coordsForFormationPlace(place, half, formation) {
+export function coordsForFormationPlace(place, half, formation, options = {}) {
+  const { compact = false } = options
   const n = typeof place === "string" ? parseInt(place, 10) : place
   if (!Number.isFinite(n)) return { x: 50, y: half === "top" ? 25 : 75 }
 
@@ -92,12 +94,14 @@ export function coordsForFormationPlace(place, half, formation) {
   const maxTier = Math.max(...Object.values(tierMap), 1)
   const t = tierForwardness(tier, maxTier)
   const x = X_BY_PLACE[n] ?? 50
+  const spread = compact ? 35 : 32
+  const gkDepth = compact ? 9 : 10
 
   if (half === "top") {
-    return { x, y: 10 + t * 32 }
+    return { x, y: gkDepth + t * spread }
   }
 
-  return { x, y: 90 - t * 32 }
+  return { x, y: 100 - gkDepth - t * spread }
 }
 
 /**
@@ -153,20 +157,22 @@ export function resolveFormationOverlaps(positions, bounds = {}) {
  * @param {{ formationPlace?: number | null }[]} xi
  * @param {"top" | "bottom"} half
  * @param {string | undefined | null} [formation]
+ * @param {{ compact?: boolean }} [options]
  */
-export function layoutFormationPlayers(xi, half, formation) {
+export function layoutFormationPlayers(xi, half, formation, options = {}) {
+  const { compact = false } = options
   const raw = xi.map((entry) =>
-    coordsForFormationPlace(entry.formationPlace, half, formation),
+    coordsForFormationPlace(entry.formationPlace, half, formation, { compact }),
   )
 
-  const yMin = half === "top" ? 8 : 54
-  const yMax = half === "top" ? 44 : 90
+  const yMin = half === "top" ? (compact ? 6 : 8) : compact ? 56 : 54
+  const yMax = half === "top" ? (compact ? 46 : 44) : compact ? 92 : 90
 
   return resolveFormationOverlaps(raw, {
-    minX: 8,
-    maxX: 92,
+    minX: compact ? 10 : 8,
+    maxX: compact ? 90 : 92,
     minY: yMin,
     maxY: yMax,
-    minDist: 14.5,
+    minDist: compact ? 17.5 : 14.5,
   })
 }

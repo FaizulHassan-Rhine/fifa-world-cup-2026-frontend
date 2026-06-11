@@ -201,7 +201,9 @@ function PlayerPin({
     .join(" | ")
 
   return (
-    <div className="flex max-w-[4.25rem] flex-col items-center">
+    <div
+      className={`flex flex-col items-center ${compact ? "max-w-[3.5rem]" : "max-w-[4.25rem]"}`}
+    >
       <div className="relative">
         <JerseyIcon
           number={player.number}
@@ -392,6 +394,29 @@ function SubstitutesBench({ teams, keyEvents, compact }) {
  *   corner: "top-right" | "bottom-right"
  * }} props
  */
+function CompactTeamHeader({ name, formation, flagUrl }) {
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-2 px-1 py-0.5">
+      <div className="flex min-w-0 items-center gap-1.5">
+        {flagUrl ? (
+          <img
+            src={flagUrl}
+            alt=""
+            className="h-3.5 w-5 shrink-0 rounded-[2px] object-cover ring-1 ring-white/25"
+            loading="lazy"
+          />
+        ) : null}
+        <span className="truncate text-[10px] font-bold text-zinc-200">{name}</span>
+      </div>
+      {formation ? (
+        <span className="shrink-0 text-[9px] font-semibold text-zinc-500">
+          {formation}
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
 function PitchTeamLabel({ name, formation, flagUrl, corner }) {
   const cornerClass =
     corner === "top-right" ? "top-2 right-2 items-end" : "bottom-2 right-2 items-end"
@@ -520,7 +545,7 @@ export function PitchLineup({
     const xi = row.startXI ?? []
     if (!xi.length) return null
 
-    const positions = layoutFormationPlayers(xi, half, row.formation)
+    const positions = layoutFormationPlayers(xi, half, row.formation, { compact })
     const jerseyColor =
       toHexColor(row.team?.color) ??
       (half === "top" ? DEFAULT_JERSEY.top : DEFAULT_JERSEY.bottom)
@@ -560,7 +585,7 @@ export function PitchLineup({
   }
 
   const height = compact
-    ? "min-h-[280px] sm:min-h-[400px] lg:min-h-[560px]"
+    ? "min-h-[520px] sm:min-h-[440px] lg:min-h-[560px]"
     : "min-h-[360px] sm:min-h-[520px] lg:min-h-[620px]"
 
   return (
@@ -575,6 +600,20 @@ export function PitchLineup({
         <p className="py-8 text-center text-[11px] text-zinc-600">Loading line-ups…</p>
       ) : hasXi && hasFormation ? (
         <>
+          {compact && home ? (
+            <CompactTeamHeader
+              name={
+                /** @type {{ team?: { name?: string } }} */ (home).team?.name ?? "Home"
+              }
+              formation={
+                /** @type {{ formation?: string }} */ (home).formation
+              }
+              flagUrl={
+                /** @type {{ team?: { flagUrl?: string | null } }} */ (home).team
+                  ?.flagUrl
+              }
+            />
+          ) : null}
           <div
             className={`relative ${height} w-full overflow-hidden rounded-xl shadow-inner ring-1 ring-emerald-950/50`}
             style={{
@@ -591,7 +630,7 @@ export function PitchLineup({
               aria-hidden
             />
             <PitchMarkings />
-            {home ? (
+            {!compact && home ? (
               <PitchTeamLabel
                 name={
                   /** @type {{ team?: { name?: string } }} */ (home).team?.name ?? "Home"
@@ -606,7 +645,7 @@ export function PitchLineup({
                 corner="top-right"
               />
             ) : null}
-            {away ? (
+            {!compact && away ? (
               <PitchTeamLabel
                 name={
                   /** @type {{ team?: { name?: string } }} */ (away).team?.name ?? "Away"
@@ -624,6 +663,20 @@ export function PitchLineup({
             {renderTeam(home, "top")}
             {renderTeam(away, "bottom")}
           </div>
+          {compact && away ? (
+            <CompactTeamHeader
+              name={
+                /** @type {{ team?: { name?: string } }} */ (away).team?.name ?? "Away"
+              }
+              formation={
+                /** @type {{ formation?: string }} */ (away).formation
+              }
+              flagUrl={
+                /** @type {{ team?: { flagUrl?: string | null } }} */ (away).team
+                  ?.flagUrl
+              }
+            />
+          ) : null}
           <SubstitutesBench
             teams={[
               /** @type {{ team?: { name?: string, color?: string | null }, homeAway?: string | null, substitutes?: unknown[] }} */ (

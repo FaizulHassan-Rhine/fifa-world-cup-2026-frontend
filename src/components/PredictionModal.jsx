@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { DateTime } from "luxon"
 import { STADIUMS } from "../data/stadiums.js"
 import {
   fetchMatchPredictions,
@@ -6,6 +7,13 @@ import {
   submitPrediction,
 } from "../api/predictionsClient.js"
 import { flagUrl } from "../utils/flags.js"
+import {
+  canSubmitPrediction,
+  hasMatchStarted,
+} from "../utils/matchPrediction.js"
+import { parseKickoffEt } from "../utils/timeFormat.js"
+
+const ZONE_ET = "America/New_York"
 
 const MAX_GOALS = 20
 
@@ -105,7 +113,7 @@ function PredictionRow({ p, finished }) {
   )
 }
 
-export function PredictionModal({ match, onClose, onResultSet }) {
+export function PredictionModal({ match, live, onClose, onResultSet }) {
   const venue = STADIUMS[match.venueKey]
   const [name, setName] = useState(() => {
     try {
@@ -130,6 +138,21 @@ export function PredictionModal({ match, onClose, onResultSet }) {
   const [adminSaving, setAdminSaving] = useState(false)
 
   const matchNumber = match?.matchNumber
+  const [, setKickoffTick] = useState(0)
+  const matchStarted = hasMatchStarted(match, live)
+  const predictionsOpen = canSubmitPrediction(match, live, finished)
+
+  useEffect(() => {
+    if (!match?.kickoffEt || hasMatchStarted(match, live)) return undefined
+
+    const kickoff = parseKickoffEt(match.kickoffEt)
+    const ms =
+      kickoff.toMillis() - DateTime.now().setZone(ZONE_ET).toMillis()
+    if (ms <= 0) return undefined
+
+    const id = window.setTimeout(() => setKickoffTick((t) => t + 1), ms + 100)
+    return () => window.clearTimeout(id)
+  }, [match, live])
 
   async function loadPredictions() {
     if (!matchNumber) return
@@ -190,6 +213,14 @@ export function PredictionModal({ match, onClose, onResultSet }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (!canSubmitPrediction(match, live, finished)) {
+      setError(
+        finished
+          ? "Predictions are closed for this match."
+          : "This match has already started. Predictions are closed.",
+      )
+      return
+    }
     setSaving(true)
     setError(null)
     try {
@@ -314,7 +345,7 @@ export function PredictionModal({ match, onClose, onResultSet }) {
               </div>
             )}
 
-            {!finished ? (
+            {predictionsOpen ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label
@@ -387,7 +418,11 @@ export function PredictionModal({ match, onClose, onResultSet }) {
               </form>
             ) : (
               <p className="text-center text-sm text-zinc-500">
-                Predictions are closed for this match.
+                {finished
+                  ? "Predictions are closed for this match."
+                  : matchStarted
+                    ? "This match has already started. Predictions are closed."
+                    : "Predictions are closed for this match."}
               </p>
             )}
 

@@ -43,6 +43,9 @@ export function MatchCardBodyTabs({
   const scrollClass =
     "max-h-64 min-w-0 overflow-x-hidden overflow-y-auto overscroll-contain rounded-lg ring-1 ring-zinc-800/80 [scrollbar-width:thin] [scrollbar-color:rgb(63_63_70)_transparent]"
 
+  const lineupScrollClass =
+    "min-w-0 overflow-x-hidden overflow-y-auto overscroll-contain rounded-lg ring-1 ring-zinc-800/80 max-h-[min(92vh,720px)] sm:max-h-[min(80vh,640px)] [scrollbar-width:thin] [scrollbar-color:rgb(63_63_70)_transparent]"
+
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <div
@@ -92,7 +95,7 @@ export function MatchCardBodyTabs({
             />
           </div>
         ) : tab === "lineups" ? (
-          <div className={`${scrollClass} max-h-76`}>
+          <div className={lineupScrollClass}>
             <PitchLineup
               lineups={lineups}
               keyEvents={keyEvents}

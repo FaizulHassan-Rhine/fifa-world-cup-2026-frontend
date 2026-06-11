@@ -482,6 +482,7 @@ export default function WorldCupPage() {
       {selectedMatch && (
         <PredictionModal
           match={selectedMatch}
+          live={findLiveForMatch(selectedMatch, index)}
           onClose={() => setSelectedMatch(null)}
           onResultSet={onPredictionUpdate}
         />
